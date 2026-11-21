@@ -14,25 +14,47 @@ const source = join(temporary, "source");
 const consumer = join(temporary, "consumer");
 const pack = join(consumer, "provider.ts");
 const packKey = "fixture-key";
+const apiPath = "/provider/v1";
 const model = "fixture-free";
 const reply = "FIXTURE_CHAT_OK";
+const messagesModel = "fixture-messages";
 let catalogStatus = 200;
+let catalogEmpty = false;
 let chats = 0;
+let messages = 0;
 
 const server = createServer(async (request, response) => {
 	const json = (status: number, body: unknown) => {
 		response.writeHead(status, { "content-type": "application/json" }).end(JSON.stringify(body));
 	};
 	try {
-		if (request.headers.authorization !== `Bearer ${packKey}`) return json(401, { error: "fixture authentication failed" });
-		if (request.method === "GET" && request.url === "/models") {
-			return json(catalogStatus, { data: [{ id: model }] });
+		const pathname = new URL(request.url ?? "/", "http://fixture.local").pathname;
+		if (request.headers.authorization !== `Bearer ${packKey}` && request.headers["x-api-key"] !== packKey) return json(401, { error: "fixture authentication failed" });
+		if (request.method === "GET" && pathname === apiPath + "/models") {
+			return json(catalogStatus, { data: catalogEmpty ? [] : [{ id: model }, { id: messagesModel, api: "anthropic-messages" }] });
 		}
-		if (request.method !== "POST" || request.url !== "/chat/completions") return json(404, { error: "unexpected route" });
+		if (request.method !== "POST" || ![apiPath + "/chat/completions", apiPath + "/messages"].includes(pathname)) return json(404, { error: "unexpected route: " + pathname });
 
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(chunk);
 		const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+		if (pathname === apiPath + "/messages") {
+			assert.equal(body.model, messagesModel);
+			assert.equal(body.stream, true);
+			messages++;
+			response.writeHead(200, { "content-type": "text/event-stream" });
+			const events = [
+				{ type: "message_start", message: { id: "msg-fixture", type: "message", role: "assistant", model: messagesModel,
+					content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 1, output_tokens: 0 } } },
+				{ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+				{ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: reply } },
+				{ type: "content_block_stop", index: 0 },
+				{ type: "message_delta", delta: { stop_reason: "end_turn", stop_sequence: null }, usage: { output_tokens: 1 } },
+				{ type: "message_stop" },
+			];
+			for (const event of events) response.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+			return response.end();
+		}
 		assert.equal(body.model, model);
 		assert.equal(body.stream, true);
 		chats++;
@@ -75,8 +97,14 @@ try {
 	tagRelease("v2.0.0");
 	const generator = new URL("./provider-engine.ts", import.meta.url);
 	await execute(process.execPath, [fileURLToPath(generator), "init", "--source", source, "--tag", "v2.0.0",
-		"--dest", consumer, "--id", "fixture", "--name", "Fixture", "--base-url", `http://127.0.0.1:${address.port}`,
+		"--dest", consumer, "--id", "fixture", "--name", "Fixture", "--base-url", `http://127.0.0.1:${address.port}${apiPath}`,
 		"--api-key-env", "FIXTURE_API_KEY"], { timeout: 90_000 });
+	const generated = readFileSync(pack, "utf8");
+	writeFileSync(pack, generated.replace('"path": "/models"\n  }', [
+		'"path": "/models"',
+		'  },',
+		'  hooks: { normalize: (row) => typeof row.api === "string" ? { api: row.api } : {} }',
+	].join("\n")));
 	execSync("pnpm install --frozen-lockfile", { cwd: consumer, stdio: "inherit", timeout: 90_000 });
 	execSync("pnpm check", { cwd: consumer, stdio: "inherit", timeout: 30_000 });
 
@@ -93,6 +121,12 @@ try {
 		XDG_DATA_HOME: join(temporary, "data"),
 		XDG_STATE_HOME: join(temporary, "state"),
 	});
+	const catalogDirectory = join(env.XAI_CACHE_DIR!, "ai-provider-integrations");
+	mkdirSync(catalogDirectory, { recursive: true });
+	writeFileSync(join(catalogDirectory, "models.dev.json"), JSON.stringify({
+		checkedAt: Date.now(),
+		catalog: { fixture: { models: { [model]: { limit: { context: 96_000, output: 8_000 } } } } },
+	}));
 	function run(command: string, args: string[]) {
 		const result = execute(command, args, { cwd: consumer, env, timeout: 60_000 });
 		result.child.stdin?.end();
@@ -106,8 +140,27 @@ try {
 		"--provider", "fixture", "--model", model, "-p", "Reply with OK."])).stdout, new RegExp(reply));
 	assert.match((await run(openCode, ["run", "--standalone", "--archived", "--model", id, "Reply with OK."])).stdout, new RegExp(reply));
 	assert.ok(chats >= 2);
+	assert.match((await run(process.execPath, [pi, "--no-extensions", "-e", join(consumer, "pi.ts"), "--no-session",
+		"--provider", "fixture", "--model", messagesModel, "-p", "Reply with OK."])).stdout, new RegExp(reply));
+	assert.match((await run(openCode, ["run", "--standalone", "--archived", "--model", `fixture/${messagesModel}`, "Reply with OK."])).stdout, new RegExp(reply));
+	assert.ok(messages >= 2);
+	const refresh = () => run(process.execPath, ["--input-type=module", "-e", [
+		'import { createCatalogRuntime } from "./engine/catalog/runtime.ts";',
+		'import { pack } from "./provider.ts";',
+		'const result = await createCatalogRuntime(pack).refresh({}, { force: true });',
+		'console.log(JSON.stringify({ source: result.source, ids: result.models.map((model) => model.id), limits: result.models.map((model) => model.contextWindow) }));',
+	].join("\n")]);
 	catalogStatus = 503;
+	const stale = await refresh();
+	assert.deepEqual(JSON.parse(stale.stdout), { source: "snapshot", ids: [model, messagesModel], limits: [96_000, 128_000] });
+	assert.match(stale.stderr, /using snapshot:.*HTTP 503/);
+	assert.match((await run(openCode, ["models", "--standalone"])).stdout, new RegExp(id));
 	await assert.rejects(run(process.execPath, ["check-catalog.ts", "--live"]), { code: 1 });
+	catalogStatus = 200;
+	catalogEmpty = true;
+	assert.deepEqual(JSON.parse((await refresh()).stdout), { source: "network", ids: [], limits: [] });
+	assert.doesNotMatch((await run(openCode, ["models", "--standalone"])).stdout, new RegExp(id));
+	assert.doesNotMatch((await run(process.execPath, [pi, "--no-extensions", "-e", join(consumer, "pi.ts"), "--list-models"])).stdout, new RegExp(model));
 
 	const packBody = readFileSync(pack, "utf8") + "\n// Provider-owned edit.\n";
 	writeFileSync(pack, packBody);
@@ -129,7 +182,7 @@ try {
 	assert.deepEqual(state(), original);
 	assert.equal(readFileSync(pack, "utf8"), packBody);
 
-	console.log("Generated checkout, native Pi and OpenCode chat, live failure, update, and rollback passed.");
+	console.log("Generated checkout, native Pi and OpenCode routes, empty catalogs, stale snapshots, live failure, update, and rollback passed.");
 } finally {
 	server.closeAllConnections();
 	server.close();

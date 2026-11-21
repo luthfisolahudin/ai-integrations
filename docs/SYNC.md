@@ -13,3 +13,7 @@ The updater verifies the current copy against its digest, stages the selected ta
 Commit `engine/` and `engine.lock.json` together. To roll back, revert that commit and run `pnpm check`.
 
 For an existing merge-based consumer, generate a sibling checkout and bring over the pack, provider fixtures, and evidence. Use the generated entrypoints to verify the new engine, then apply the equivalent file changes to the existing repo. Preserve model IDs and the provider's Git history.
+
+Engine v2.0.1 refreshes cached catalogs produced by custom discovery hooks. Their
+old snapshots may carry outdated visibility decisions or synthesized zero prices.
+Catalogs read directly from a provider retain their existing snapshots.
