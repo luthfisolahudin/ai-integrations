@@ -29,4 +29,4 @@ For a provider with multiple protocols, normalized models carry the selected nat
 - A fresh generated checkout can install from its lockfile, discover a fixture, and send a streamed chat from both native hosts.
 - A catalog change removes retired models. An empty live result and a failed discovery produce different observable outcomes.
 - A compatible engine update and rollback preserve provider files. A failing update restores the previous engine and pin.
-- CosmoHub, Guts AI, and CommandCode exercise the provider contracts. Any live chat verification uses a model with confirmed zero input and output rates. The fixture path covers the same contracts when a provider offers no usable free model.
+- Guts AI and CommandCode exercise the provider contracts. Any live chat verification uses a model with confirmed zero input and output rates. The fixture path covers the same contracts when a provider offers no usable free model.

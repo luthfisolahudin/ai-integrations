@@ -38,9 +38,8 @@ An alias also redirects limits, modalities and reasoning, since it changes the
 metadata lookup key, not just the price. It never adds membership: a model that
 is not in the provider catalog stays absent.
 
-Do not put an aggregator's own price field in a pack. CosmoHub publishes none;
-GutsAI publishes `price_per_1m` in **IDR, blended in/out**, which cannot be
-mapped honestly into four USD fields.
+Guts AI publishes `price_per_1m` as a blended input and output rate in IDR.
+That rate has no direct mapping to the four USD cost fields.
 
 ## 3. T3 Code (what actually bills)
 
@@ -50,14 +49,14 @@ shape on this machine:
 ```jsonc
 {
   "usagePriceOverrides": {
-    "cosmoshub/deepseek-v4.1-flash": {
+    "example/deepseek-v4.1-flash": {
       "inputCostPerMillionTokens": 0.3,
       "outputCostPerMillionTokens": 1.2,
       "cacheReadCostPerMillionTokens": 0.006
     }
   },
   "usageModelAliases": {
-    "cosmoshub/kimi-k3.1-pro": "kimi-k3.1-pro"
+    "example/kimi-k3.1-pro": "kimi-k3.1-pro"
   }
 }
 ```
