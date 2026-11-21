@@ -121,6 +121,9 @@ function copyEngine(source: string, tag: string, destination: string, workspace:
 		if (!existsSync(join(destination, "engine", adapter, "provider.ts"))) throw new Error(`Release does not include the reusable ${adapter} adapter`);
 	}
 	write("engine/LICENSE", git(source, "show", `${commit}:LICENSE`));
+	// The updater ships itself. Without this a checkout can never adopt a new lock
+	// format: the old verify() rejects the new manifest before anything is written.
+	write("scripts/engine.ts", readFileSync(new URL(import.meta.url), "utf8"));
 	return { commit, tag, packSchemaVersion, files };
 }
 
