@@ -134,6 +134,16 @@ function copyEngine(source: string, tag: string, destination: string, workspace:
  * the conformance suite live outside it, so they were unverified copies. Listing
  * each file makes an edit anywhere the release owns a lock violation.
  */
+/** A lock predating the file manifest has one `digest` and no `files`. */
+function isLegacyLock(destination: string): boolean {
+	try {
+		const lock = JSON.parse(readFileSync(join(destination, LOCK), "utf8")) as Partial<EngineLock>;
+		return lock.files === undefined;
+	} catch {
+		return false;
+	}
+}
+
 function verify(destination: string): EngineLock {
 	const lock = JSON.parse(readFileSync(join(destination, LOCK), "utf8")) as EngineLock;
 	if (lock.files === undefined || Object.keys(lock.files).length === 0) {
@@ -197,7 +207,7 @@ function init(source: string, tag: string, destination: string) {
 			target: "ES2023", module: "NodeNext", lib: ["ES2023"], types: ["node"],
 			allowImportingTsExtensions: true, noEmit: true, strict: true, skipLibCheck: true,
 		} });
-		mkdirSync(join(temporary, "scripts"));
+		mkdirSync(join(temporary, "scripts"), { recursive: true });
 		mkdirSync(join(temporary, "fixtures"));
 		json(join(temporary, "fixtures/catalog.json"), { data: [] });
 		writeFileSync(join(temporary, ".gitignore"), "node_modules/\n.engine-updating/\n");
@@ -234,9 +244,62 @@ function update(source: string, tag: string, destination: string) {
 	const guard = join(destination, ".engine-updating");
 	mkdirSync(guard);
 	try {
+		// A legacy lock cannot be verified against a per-file manifest, so the first
+		// update out of one replaces the tree outright. It still runs the provider
+		// repo's own `pnpm check`, and still restores the old lock on failure.
+		if (isLegacyLock(destination)) {
+			console.log("engine: replacing a pre-manifest lock; run \`git diff\` and commit the result");
+			adoptLegacy(source, tag, destination);
+			return;
+		}
 		replaceEngine(source, tag, destination);
 	} finally {
 		rmSync(guard, { recursive: true, force: true });
+	}
+}
+
+function adoptLegacy(source: string, tag: string, destination: string) {
+	const stage = mkdtempSync(join(dirname(destination), ".engine-adopt-"));
+	const backup = join(stage, "backup");
+	const lock = join(destination, LOCK);
+	const previousLock = readFileSync(lock);
+	try {
+		const next = copyEngine(source, tag, join(stage, "new"), existsSync(join(destination, "packages", "cli", "package.json")));
+		for (const relativePath of ["engine", ...Object.keys(next.files)]) {
+			const from = join(destination, relativePath);
+			if (!existsSync(from)) continue;
+			const to = join(backup, relativePath);
+			mkdirSync(dirname(to), { recursive: true });
+			cpSync(from, to, { recursive: true });
+		}
+		rmSync(join(destination, "engine"), { recursive: true, force: true });
+		for (const relativePath of Object.keys(next.files)) {
+			const from = join(stage, "new", relativePath);
+			const to = join(destination, relativePath);
+			mkdirSync(dirname(to), { recursive: true });
+			cpSync(from, to, { recursive: true });
+		}
+		json(lock, next);
+		try {
+			execSync("pnpm run check", { cwd: destination, stdio: "inherit" });
+		} catch (error) {
+			rmSync(join(destination, "engine"), { recursive: true, force: true });
+			for (const relativePath of Object.keys(next.files)) {
+				const to = join(destination, relativePath);
+				const from = join(backup, relativePath);
+				rmSync(to, { recursive: true, force: true });
+				if (!existsSync(from)) continue;
+				mkdirSync(dirname(to), { recursive: true });
+				cpSync(from, to, { recursive: true });
+			}
+			rmSync(join(destination, "engine"), { recursive: true, force: true });
+			const oldEngine = join(backup, "engine");
+			if (existsSync(oldEngine)) cpSync(oldEngine, join(destination, "engine"), { recursive: true });
+			writeFileSync(lock, previousLock);
+			throw error;
+		}
+	} finally {
+		rmSync(stage, { recursive: true, force: true });
 	}
 }
 

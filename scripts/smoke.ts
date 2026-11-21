@@ -187,7 +187,17 @@ try {
 	assert.deepEqual(state(), original);
 	assert.equal(readFileSync(pack, "utf8"), packBody);
 
-	console.log("Generated checkout, native Pi and OpenCode routes, empty catalogs, stale snapshots, live failure, update, and rollback passed.");
+	// A lock written before the file manifest has no `files`; the first update out
+	// of one must still adopt the new format rather than failing to verify.
+	const legacy = JSON.parse(readFileSync(join(consumer, "engine.lock.json"), "utf8")) as { tag: string; files: Record<string, string> };
+	writeFileSync(join(consumer, "engine.lock.json"), JSON.stringify({ tag: legacy.tag ?? "v2.0.0", commit: "legacy", packSchemaVersion: 1, digest: "stale" }, null, 2));
+	await check("v2.0.1");
+	assert.equal(state().tag, "v2.0.1");
+	assert.ok(Object.keys(state().files).length > 0, "the adopted lock carries a file manifest");
+	await check("v2.0.0");
+	assert.deepEqual(state(), original);
+
+	console.log("Generated checkout, native Pi and OpenCode routes, empty catalogs, stale snapshots, live failure, update, rollback, and legacy-lock adoption passed.");
 } finally {
 	server.closeAllConnections();
 	server.close();
