@@ -25,6 +25,9 @@ const sources = {
  * conformance suite, and the engine's own tests. They used to be vendored copies
  * nothing verified, so they drifted from the tag one `engine:update` at a time.
  */
+/** Files that only make sense where the example packs exist, i.e. upstream. */
+const TEMPLATE_ONLY = /\/corpus\.test\.ts$/;
+
 const managed = [
 	"packages/contract/test",
 	"packages/catalog/test",
@@ -71,9 +74,14 @@ function rewriteSpecifiers(body: string, relativeFile: string): string {
 		/"@luthfisolahudin\/[\w.-]*?-(catalog|contract|provider|pi|opencode|cli|conformance)(\/[^"]+)?"/g,
 		(_match, dependency: string, subpath: string | undefined) => {
 			const leaf = subpath === undefined ? "index.ts" : `${subpath.slice(1)}.ts`;
-			const target = dependency === "provider"
-				? `packages/provider/src/${leaf}`
-				: `engine/${dependency}/${leaf}`;
+			// contract, catalog, pi and opencode are copied into engine/. provider is the
+			// vendored package a checkout owns, and cli is a workspace package with a
+			// src/ index. conformance has no public entry point at all.
+			const target = dependency === "cli"
+				? `packages/cli/src/${leaf}`
+				: dependency === "provider"
+					? `packages/provider/src/${leaf}`
+					: `engine/${dependency}/${leaf}`;
 			return JSON.stringify(posix.relative(from, target).replace(/^(?!\.)/, "./"));
 		},
 	);
@@ -109,7 +117,8 @@ function copyEngine(source: string, tag: string, destination: string, workspace:
 	if (workspace) {
 		for (const tree of managed) {
 			const listing = git(source, "ls-tree", "-r", "--name-only", commit, "--", tree).trim();
-			const selected = listing.length === 0 ? [] : listing.split("\n").filter((path) => path.endsWith(".ts"));
+			const selected = listing.length === 0 ? [] : listing.split("\n")
+				.filter((path) => path.endsWith(".ts") && !TEMPLATE_ONLY.test(path));
 			if (selected.length === 0) throw new Error(`Release does not contain ${tree}`);
 			for (const path of selected) {
 				write(path, rewriteSpecifiers(git(source, "show", `${commit}:${path}`), path));
