@@ -49,13 +49,15 @@ export interface ProjectOptions extends HostOptions {
  */
 export function toPiModel(model: NormalizedModel, options: ProjectOptions): PiModel | undefined {
 	if (model.excluded !== undefined) return undefined;
+	const api = model.api ?? options.api ?? "openai-completions";
+	if (api !== "openai-completions" && api !== "anthropic-messages" && api !== "openai-responses") return undefined;
 
 	const projected: PiModel = {
 		type: "chat",
 		id: model.id,
 		name: model.name,
 		provider: options.providerId,
-		api: (model.api as PiApi | undefined) ?? options.api ?? "openai-completions",
+		api,
 		baseUrl: options.baseUrl,
 		reasoning: model.reasoning,
 		input: model.input.filter((m): m is "text" | "image" => m === "text" || m === "image"),
@@ -80,6 +82,9 @@ export function toPiModel(model: NormalizedModel, options: ProjectOptions): PiMo
 				? undefined
 				: declaredEffortMenu(model.thinking.efforts, model.thinking.canDisable);
 	const compat: Record<string, unknown> = { ...options.compat };
+	if (api !== "openai-completions" && model.thinking.efforts !== undefined) {
+		projected.thinkingLevelMap = declaredEffortMenu(model.thinking.efforts, model.thinking.canDisable);
+	}
 
 	if (mapping.pi !== undefined) {
 		compat.thinkingFormat = mapping.pi;

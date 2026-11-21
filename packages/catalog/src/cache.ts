@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 
 import type { RawRecord } from "@luthfisolahudin/ai-provider-integrations-template-contract";
 
+import { parseEnvelope } from "./parse.ts";
+
 export const CACHE_ROOT = "ai-provider-integrations";
 
 export interface Snapshot {
@@ -54,12 +56,12 @@ export function snapshotPath(options: CacheLocationOptions): string {
 export function readSnapshot(path: string): Snapshot | undefined {
 	try {
 		const parsed = JSON.parse(readFileSync(path, "utf8")) as Partial<Snapshot>;
-		if (typeof parsed.checkedAt !== "number" || !Array.isArray(parsed.raw)) return undefined;
+		if ((typeof parsed.checkedAt !== "number" || !Number.isFinite(parsed.checkedAt)) || !Array.isArray(parsed.raw)) return undefined;
 		return {
 			checkedAt: parsed.checkedAt,
 			...(typeof parsed.etag === "string" ? { etag: parsed.etag } : {}),
 			...(typeof parsed.catalogVersion === "string" ? { catalogVersion: parsed.catalogVersion } : {}),
-			raw: parsed.raw as RawRecord[],
+			raw: parseEnvelope(parsed.raw),
 		};
 	} catch {
 		return undefined;
