@@ -61,7 +61,3 @@ tasks:
     cmds:
       - pnpm probe:routes
 
-  init:
-    desc: Scaffold a new provider checkout from a tagged engine
-    cmds:
-      - pnpm run engine:init {{.CLI_ARGS}}

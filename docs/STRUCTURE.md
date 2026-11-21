@@ -1,30 +1,37 @@
 # Structure
 
-The upstream workspace enforces the import boundaries in [the boundary checker](../packages/cli/src/lib/boundaries.ts). Layers are derived from the package suffix, so `contract`, `catalog`, `provider`, `pi`, `opencode`, `cli`, and `conformance` resolve the same way in every checkout; `tier-*` names an example pack.
+Focused packages; layers are derived from the package name and the file path in
+[the boundary checker](../packages/dev/cli/src/commands/boundaries.ts).
 
 | Owner | Paths |
 |---|---|
-| Policy | `packages/contract` |
-| Discovery and snapshot I/O | `packages/catalog` |
-| Host SDK wiring | `adapters/pi`, `adapters/opencode` |
-| Fixture-based upstream checks | `packages/conformance`, `packages/provider`, `examples` |
-| Starter and engine updater | `scripts/provider-engine.ts` |
+| Policy | `packages/runtime/contract` |
+| Discovery and snapshot I/O | `packages/runtime/catalog` |
+| Reusable host factories | `packages/runtime/pi`, `packages/runtime/opencode` |
+| Commands and tests (dev) | `packages/dev/cli`, `packages/dev/conformance` |
+| Vendor data and fixtures | `packages/provider` |
+| Host wiring (thin, per vendor) | `adapters/pi`, `adapters/opencode` |
+| Example packs (template only) | `examples` |
 
-## What a release owns
+## Naming
 
-`engine.lock.json` is a per-file sha256 manifest, not one directory digest. A
-downstream checkout pins these trees:
+`@luthfisolahudin/<project>-integrations-<role>` — the head token is the owner
+project, the tail is the role. `ai-integrations-pi` is the factory;
+`9router-integrations-pi` is that checkout's wiring.
 
-| Tree | In `engine/`? | Rationale |
-|---|---|---|
-| `packages/contract/src`, `packages/catalog/src` | yes | the runtime the adapters call |
-| `adapters/*/src` (minus `index.ts`) | yes | host wiring |
-| `packages/cli/src`, `packages/cli/test` | no | commands and their tests, generic across providers |
-| `packages/contract/test`, `packages/catalog/test` | no | the engine's own tests |
-| `packages/conformance/test` | no | generic, minus `corpus.test.ts` |
+## The #provider alias
 
-`packages/provider` is never in the lock: it is the one package a checkout owns.
-`corpus.test.ts` stays upstream because it imports the example packs a downstream
-repo deletes.
+A package that needs the vendor imports `#provider`. Each consumer package maps
+it to `src/provider.ts`, a one-line re-export of
+`../../../provider/src/index.ts` — the layout depth (`packages/<marker>/<pkg>`)
+is the same in every checkout, so the shim is identical everywhere. Only cli and
+conformance declare the alias; a factory importing it fails to resolve.
+
+## Copy-in surface
+
+`packages/runtime/**` and `packages/dev/**` are what a downstream checkout copies
+from a tagged release (see [SYNC](SYNC.md)). Everything else is owned by the
+checkout. `examples/corpus.test.ts` is template-only because it needs the tier
+packs a downstream repo deletes.
 
 See [the runtime flow](DESIGN.md) and [the downstream update procedure](SYNC.md).

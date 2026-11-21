@@ -1,4 +1,4 @@
-import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-provider-integrations-template-contract";
+import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-integrations-contract";
 
 /**
  * Tier B: the provider describes modalities, availability, and price, but never

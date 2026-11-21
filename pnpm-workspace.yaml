@@ -1,5 +1,7 @@
 packages:
-  - "packages/*"
+  - "packages/provider"
+  - "packages/runtime/*"
+  - "packages/dev/*"
   - "adapters/*"
   - "examples/*"
 

@@ -1,6 +1,4 @@
-import { MEASURED_WIRE_EFFORT, packs } from "@luthfisolahudin/ai-provider-integrations-template-provider";
-import { createOpenCodePlugin } from "./provider.ts";
+import { createOpenCodePlugin } from "@luthfisolahudin/ai-integrations-opencode";
+import { provider } from "@luthfisolahudin/example-integrations-provider";
 
-export { createOpenCodePlugin };
-
-export default createOpenCodePlugin(packs[0]!, MEASURED_WIRE_EFFORT);
+export default createOpenCodePlugin(provider.packs[0]!, provider.effort);

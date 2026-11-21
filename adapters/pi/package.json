@@ -1,32 +1,19 @@
 {
-  "name": "@luthfisolahudin/ai-provider-integrations-template-pi",
+  "name": "@luthfisolahudin/example-integrations-pi",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./model": "./src/model.ts"
+    ".": "./src/index.ts"
   },
   "pi": {
     "extensions": [
       "src/index.ts"
     ]
   },
-  "scripts": {
-    "test": "node --test \"test/**/*.test.ts\""
-  },
   "dependencies": {
-    "@luthfisolahudin/ai-provider-integrations-template-catalog": "workspace:*",
-    "@luthfisolahudin/ai-provider-integrations-template-contract": "workspace:*",
-    "@luthfisolahudin/ai-provider-integrations-template-provider": "workspace:*"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*"
-  },
-  "devDependencies": {
-    "@earendil-works/pi-ai": "catalog:",
-    "@earendil-works/pi-coding-agent": "catalog:"
+    "@luthfisolahudin/ai-integrations-pi": "workspace:*",
+    "@luthfisolahudin/example-integrations-provider": "workspace:*"
   }
 }

@@ -1,6 +1,4 @@
-import { MEASURED_WIRE_EFFORT, packs } from "@luthfisolahudin/ai-provider-integrations-template-provider";
-import { createPiExtension } from "./provider.ts";
+import { createPiExtension } from "@luthfisolahudin/ai-integrations-pi";
+import { provider } from "@luthfisolahudin/example-integrations-provider";
 
-export { createPiExtension };
-
-export default createPiExtension(packs[0]!, MEASURED_WIRE_EFFORT);
+export default createPiExtension(provider.packs[0]!, provider.effort);

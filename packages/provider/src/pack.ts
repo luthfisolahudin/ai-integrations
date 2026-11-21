@@ -1,4 +1,4 @@
-import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-provider-integrations-template-contract";
+import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-integrations-contract";
 
 import { curated } from "./curated.ts";
 import { FALLBACK } from "./fallback.ts";
@@ -23,7 +23,7 @@ export const examplePack = definePack({
 		path: "/models",
 		timeoutMs: 5_000,
 		etag: true,
-		userAgent: "ai-provider-integrations-template/0.1",
+		userAgent: "ai-integrations/0.1",
 	},
 	fields: {
 		contextWindow: ["capabilities.contextWindow", "context_length"],

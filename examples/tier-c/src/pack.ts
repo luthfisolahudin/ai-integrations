@@ -1,4 +1,4 @@
-import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-provider-integrations-template-contract";
+import { PACK_SCHEMA_VERSION, definePack } from "@luthfisolahudin/ai-integrations-contract";
 
 /**
  * Tier C: the catalog is a list of ids and nothing else. Every capability is

@@ -1,4 +1,4 @@
-import type { ModelFacts } from "@luthfisolahudin/ai-provider-integrations-template-contract";
+import type { ModelFacts } from "@luthfisolahudin/ai-integrations-contract";
 
 /**
  * Facts the catalog cannot express, keyed by model id.

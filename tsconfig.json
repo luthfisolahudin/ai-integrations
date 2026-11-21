@@ -16,40 +16,7 @@
     "noEmit": true,
     "types": [
       "node"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@luthfisolahudin/ai-provider-integrations-template-contract": [
-        "packages/contract/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-catalog": [
-        "packages/catalog/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-provider": [
-        "packages/provider/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-cli": [
-        "packages/cli/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-pi": [
-        "adapters/pi/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-opencode": [
-        "adapters/opencode/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-tier-b": [
-        "examples/tier-b/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-tier-c": [
-        "examples/tier-c/src/index.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-pi/model": [
-        "adapters/pi/src/model.ts"
-      ],
-      "@luthfisolahudin/ai-provider-integrations-template-opencode/model": [
-        "adapters/opencode/src/model.ts"
-      ]
-    }
+    ]
   },
   "include": [
     "packages/**/*.ts",

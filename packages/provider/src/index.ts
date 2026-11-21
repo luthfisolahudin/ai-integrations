@@ -1,4 +1,4 @@
-import type { Pack } from "@luthfisolahudin/ai-provider-integrations-template-contract";
+import type { Pack } from "@luthfisolahudin/ai-integrations-contract";
 
 import { MEASURED_WIRE_EFFORT } from "./effort.ts";
 import { CAPABILITY_INVARIANTS, type CapabilityInvariant } from "./invariants.ts";
@@ -19,3 +19,15 @@ export const packs: readonly Pack[] = [examplePack];
 export const measuredIds: ReadonlySet<string> = new Set(Object.keys(MEASURED_WIRE_EFFORT));
 
 export const invariants: readonly CapabilityInvariant[] = CAPABILITY_INVARIANTS;
+
+/** Where this vendor's fixture lives; the CLI reads it through #provider. */
+export const fixture = new URL("../fixtures/catalog.json", import.meta.url);
+
+/** One object per provider checkout, so host wiring stays one line. */
+export const provider = {
+	packs,
+	effort: MEASURED_WIRE_EFFORT,
+	measuredIds,
+	invariants,
+	fixture,
+} as const;

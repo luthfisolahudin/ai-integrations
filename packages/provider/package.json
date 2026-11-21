@@ -1,5 +1,5 @@
 {
-  "name": "@luthfisolahudin/ai-provider-integrations-template-provider",
+  "name": "@luthfisolahudin/example-integrations-provider",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,6 +10,6 @@
     "test": "node --test \"test/**/*.test.ts\""
   },
   "dependencies": {
-    "@luthfisolahudin/ai-provider-integrations-template-contract": "workspace:*"
+    "@luthfisolahudin/ai-integrations-contract": "workspace:*"
   }
 }

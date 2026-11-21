@@ -1,25 +1,14 @@
 {
-  "name": "@luthfisolahudin/ai-provider-integrations-template-opencode",
+  "name": "@luthfisolahudin/example-integrations-opencode",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./model": "./src/model.ts"
-  },
-  "scripts": {
-    "test": "node --test \"test/**/*.test.ts\""
+    ".": "./src/index.ts"
   },
   "dependencies": {
-    "@luthfisolahudin/ai-provider-integrations-template-catalog": "workspace:*",
-    "@luthfisolahudin/ai-provider-integrations-template-contract": "workspace:*",
-    "@luthfisolahudin/ai-provider-integrations-template-provider": "workspace:*"
-  },
-  "peerDependencies": {
-    "@opencode/plugin": "*"
-  },
-  "devDependencies": {
-    "@opencode/plugin": "catalog:"
+    "@luthfisolahudin/ai-integrations-opencode": "workspace:*",
+    "@luthfisolahudin/example-integrations-provider": "workspace:*"
   }
 }

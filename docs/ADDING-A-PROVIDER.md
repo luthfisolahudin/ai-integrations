@@ -1,18 +1,21 @@
 # Add a provider
 
-Run the generator from the upstream checkout, with Node and pnpm available. Choose a tag that contains the copy-in engine.
+Copy the layout, rename the example vendor, fill in the vendor facts:
 
 ```sh
-node scripts/provider-engine.ts init --tag <version> --dest ../acme-integrations --id acme --name "Acme AI" --base-url https://api.acme.test/v1 --api-key-env ACME_API_KEY
+npx degit luthfisolahudin/ai-integrations/packages/runtime#v2.2.0 packages/runtime
+npx degit luthfisolahudin/ai-integrations/packages/dev#v2.2.0 packages/dev
 ```
 
-The destination must be a new directory. Supply the credential as an environment variable. Omit `--api-key-env` for a keyless endpoint.
+1. Rename `packages/provider`'s package to
+   `@luthfisolahudin/<vendor>-integrations-provider` and replace the example
+   pack with yours (`pack.ts`, `curated.ts`, `effort.ts`, `invariants.ts`,
+   `fallback.ts`, `fixtures/`).
+2. Point the adapters at your provider:
+   `adapters/pi/src/index.ts` and `adapters/opencode/src/index.ts` import
+   `provider` from your package — keep them at four lines.
+3. Generate `ai-integrations.lock.json` (`node scripts/verify-upstream.ts --write`).
+4. Run `pnpm check`, then `pnpm run check:catalog -- --live` to verify discovery.
 
-In the generated checkout:
-
-1. Run `pnpm install --frozen-lockfile`.
-2. Configure field aliases, filters, and verified overrides in `provider.ts`.
-3. Capture a sanitized payload in `fixtures/catalog.json` and run `pnpm check` and `pnpm run check:catalog`.
-4. Run `pnpm run check:catalog --live`. Confirm its models in [both installed hosts](INSTALL.md).
-
-Keep provider facts in the generated repo. [Adoption and subsequent updates](SYNC.md)
+Capture a sanitised catalog into `packages/provider/fixtures/catalog.json` for
+offline checks. Every measured effort needs a line in the evidence docs.

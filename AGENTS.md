@@ -6,10 +6,9 @@ model discovery for Pi and OpenCode. Membership comes from the provider's
 
 ## What this repo is
 
-A pnpm workspace with role-separated packages: the engine is generic, the vendor
-lives in exactly one package, and two adapters translate normalised models into
-each harness's API. The template ships three example packs covering three real
-catalog qualities:
+A pnpm workspace of focused packages. Upstream owns the runtime and the tooling;
+a checkout owns exactly one vendor package plus two thin wiring adapters. The
+template ships three example packs covering three real catalog qualities:
 
 - `packages/provider` — the starter (Tier A: the catalog describes itself);
 - `examples/tier-b` — modalities, availability and price only (Tier B);
@@ -33,9 +32,10 @@ Four words decide where a line of code goes:
 | Word | Meaning | Package |
 |---|---|---|
 | facts | vendor data and measurements | `packages/provider` |
-| policy | vendor-neutral rules and contracts | `packages/contract` |
-| mechanics | I/O that applies policy to facts | `packages/catalog` |
-| adapters | translation into a host API | `adapters/pi`, `adapters/opencode` |
+| policy | vendor-neutral rules and contracts | `packages/runtime/contract` |
+| mechanics | I/O that applies policy to facts | `packages/runtime/catalog` |
+| adapters | host wiring (thin) | `adapters/pi`, `adapters/opencode` |
+| factories | reusable host adapters | `packages/runtime/pi`, `packages/runtime/opencode` |
 
 Import rules, enforced by `workspace:*` deps and `task check:boundaries`:
 
@@ -58,7 +58,6 @@ task probe:routes     # which wire routes the endpoint exposes
 task report --write   # regenerate docs/PROVIDERS.md (check runs --check)
 task doctor           # symlink pair, AGENTS.md, skills, vendor shape
 task pricing          # T3 Code price block: print, --check, or --write
-task init             # generate a new checkout with a pinned engine
 ```
 
 ## Hard invariants
