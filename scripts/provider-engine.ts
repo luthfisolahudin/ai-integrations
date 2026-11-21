@@ -70,9 +70,12 @@ function json(path: string, value: unknown) {
  */
 function rewriteSpecifiers(body: string, relativeFile: string): string {
 	const from = posix.dirname(relativeFile);
+	// Only import specifiers are rewritten. A test that asserts on a package
+	// *name* passes the string as an argument, and rewriting that would change what
+	// the assertion means.
 	return body.replace(
-		/"@luthfisolahudin\/[\w.-]*?-(catalog|contract|provider|pi|opencode|cli|conformance)(\/[^"]+)?"/g,
-		(_match, dependency: string, subpath: string | undefined) => {
+		/(\bfrom\s*|\bimport\s*\(\s*)"@luthfisolahudin\/[\w.-]*?-(catalog|contract|provider|pi|opencode|cli|conformance)(\/[^"]+)?"/g,
+		(_match, prefix: string, dependency: string, subpath: string | undefined) => {
 			const leaf = subpath === undefined ? "index.ts" : `${subpath.slice(1)}.ts`;
 			// contract, catalog, pi and opencode are copied into engine/. provider is the
 			// vendored package a checkout owns, and cli is a workspace package with a
@@ -82,7 +85,7 @@ function rewriteSpecifiers(body: string, relativeFile: string): string {
 				: dependency === "provider"
 					? `packages/provider/src/${leaf}`
 					: `engine/${dependency}/${leaf}`;
-			return JSON.stringify(posix.relative(from, target).replace(/^(?!\.)/, "./"));
+			return `${prefix}${JSON.stringify(posix.relative(from, target).replace(/^(?!\.)/, "./"))}`;
 		},
 	);
 }
