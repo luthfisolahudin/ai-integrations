@@ -65,7 +65,13 @@ for (const pack of packs) {
 
 	test(`${pack.id}: an effort menu exists only where a measurement does`, () => {
 		const models = buildModels(pack, records(), { measuredIds });
-		const host = { providerId: pack.id, baseUrl: pack.baseUrl };
+		// The Pi projection needs the same format overrides the runtime passes, or a
+		// pack that declares an equivalence would look unprojected here only.
+		const host = {
+			providerId: pack.id,
+			baseUrl: pack.baseUrl,
+			...(pack.thinkingFormatOverrides === undefined ? {} : { thinkingFormatOverrides: pack.thinkingFormatOverrides }),
+		};
 		const pi = new Map(toPiModels(models, MEASURED_WIRE_EFFORT, host).map((model) => [model.id, model]));
 		const opencode = new Map(toOpencodeModels(models, MEASURED_WIRE_EFFORT, pack.thinkingFormatOverrides).map((model) => [String(model.id), model]));
 
