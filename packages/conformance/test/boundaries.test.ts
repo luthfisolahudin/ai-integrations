@@ -30,3 +30,16 @@ test("allowed directions pass silently", () => {
 	assert.equal(checkImport({ file: "packages/catalog/src/x.ts", line: 1, specifier: "@luthfisolahudin/ai-provider-integrations-template-contract", from: "catalog" }), undefined);
 	assert.equal(checkImport({ file: "adapters/pi/src/x.ts", line: 1, specifier: "@luthfisolahudin/ai-provider-integrations-template-provider", from: "adapter" }), undefined);
 });
+
+test("the layer comes from the package suffix, not a package list", () => {
+	// A downstream checkout deletes `examples/`, so a hardcoded entry for a
+	// `tier-b`/`tier-c` package would describe something that does not exist.
+	// Deriving the layer from the suffix keeps one rule for every checkout.
+	assert.equal(layerOfSpecifier("@luthfisolahudin/ai-provider-integrations-template-tier-b")?.layer, "example");
+	assert.equal(layerOfSpecifier("@luthfisolahudin/ai-provider-integrations-template-conformance")?.layer, "conformance");
+	assert.equal(layerOfSpecifier("@luthfisolahudin/any-other-repo-catalog")?.layer, "catalog");
+	assert.equal(layerOfSpecifier("catalog")?.layer, "catalog");
+	assert.equal(layerOfSpecifier("provider")?.layer, "provider");
+	// An unknown suffix is not a workspace package.
+	assert.equal(layerOfSpecifier("@luthfisolahudin/any-other-repo-nonexistent"), undefined);
+});
