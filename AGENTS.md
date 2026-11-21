@@ -51,11 +51,11 @@ Import rules, enforced by `workspace:*` deps and `task check:boundaries`:
 ## Commands
 
 ```sh
-task check            # typecheck + unit tests + boundaries + doctor
+task check            # typecheck + unit tests + boundaries + catalog + report + doctor
 task check:catalog    # project the fixture/live catalog, assert invariants
 task probe:effort     # measure thinking/effort for one model (needs an API key)
 task probe:routes     # which wire routes the endpoint exposes
-task report --write   # regenerate docs/PROVIDERS.md
+task report --write   # regenerate docs/PROVIDERS.md (check runs --check)
 task doctor           # symlink pair, AGENTS.md, skills, vendor shape
 task pricing          # T3 Code price block: print, --check, or --write
 task init             # generate a new checkout with a pinned engine

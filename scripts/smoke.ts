@@ -88,7 +88,12 @@ try {
 
 	mkdirSync(source);
 	git("init", "--quiet");
-	for (const path of ["packages/contract/src", "packages/catalog/src", "adapters/pi/src", "adapters/opencode/src"]) {
+	// Mirror every tree the release owns, including the managed ones, so the smoke
+	// fixture exercises the same copy the real generator does.
+	for (const path of [
+		"packages/contract/src", "packages/catalog/src", "adapters/pi/src", "adapters/opencode/src",
+		"packages/contract/test", "packages/catalog/test", "packages/cli/src", "packages/conformance/test",
+	]) {
 		const output = join(source, path);
 		mkdirSync(dirname(output), { recursive: true });
 		cpSync(new URL(`../${path}`, import.meta.url), output, { recursive: true });
@@ -165,7 +170,7 @@ try {
 	const packBody = readFileSync(pack, "utf8") + "\n// Provider-owned edit.\n";
 	writeFileSync(pack, packBody);
 	const check = (tag: string) => run(process.execPath, ["scripts/engine.ts", "update", "--source", source, "--tag", tag]);
-	const state = () => JSON.parse(readFileSync(join(consumer, "engine.lock.json"), "utf8")) as { tag: string; digest: string };
+	const state = () => JSON.parse(readFileSync(join(consumer, "engine.lock.json"), "utf8")) as { tag: string; files: Record<string, string> };
 	const original = state();
 	const contract = join(source, "packages/contract/src/pack.ts");
 	const contractBody = readFileSync(contract, "utf8");
