@@ -15,14 +15,13 @@ catalog qualities:
 - `examples/tier-b` — modalities, availability and price only (Tier B);
 - `examples/tier-c` — ids and nothing else (Tier C).
 
-`provider-init` turns this checkout into a single-provider repo and deletes the
-corpus.
+[Generate downstream checkouts](docs/ADDING-A-PROVIDER.md) from tagged engine releases.
 
 ## Read first
 
 - `docs/DESIGN.md` — why membership, metadata and behaviour are three questions.
 - `docs/STRUCTURE.md` — the package cut and the import matrix.
-- `docs/SYNC.md` — how a provider repo takes template updates.
+- `docs/SYNC.md` — how a provider repo updates its copied engine.
 - `docs/ADDING-A-PROVIDER.md` — the long form of the `add-provider` skill.
 - `docs/THINKING.md` — declared formats, measured efforts, and the evidence rule.
 - `docs/EVIDENCE.md` — this repo's probe log.
@@ -47,8 +46,7 @@ Import rules, enforced by `workspace:*` deps and `task check:boundaries`:
 - `packages/cli` may not import an adapter.
 - `packages/conformance` may import everything, and is the only package that does.
 - Import across packages by package name (`<scope>/<repo>-<suffix>`), never by
-  relative path. `task init` renames the prefix, and relative paths silently
-  survive the rename.
+  relative path. The copy-in generator rewrites engine-internal workspace imports.
 
 ## Commands
 
@@ -60,20 +58,16 @@ task probe:routes     # which wire routes the endpoint exposes
 task report --write   # regenerate docs/PROVIDERS.md
 task doctor           # symlink pair, AGENTS.md, skills, vendor shape
 task pricing          # T3 Code price block: print, --check, or --write
-task sync:template    # merge a template tag (downstream repos only)
-task init             # turn this checkout into a provider repo
+task init             # generate a new checkout with a pinned engine
 ```
 
 ## Hard invariants
 
 1. **Never invent a capability.** Unknown stays unknown; a guessed `vision` or
    `contextWindow` shows up as `default` provenance and is reviewed in a diff.
-2. **Never invent an effort.** A model gets an effort menu only when
-   `packages/provider/src/effort.ts` has a measured entry backed by
-   `docs/EVIDENCE.md`. Unmeasured means no menu, not a plausible default.
+2. **Never invent an effort.** An effort menu requires a declared or measured value and a supported wire format.
 3. **Never derive reasoning or vision from a regex on the model id.**
-4. **Membership is discovered.** A pack may pin a small fallback so a provider is
-   never registered empty, and nothing else.
+4. **Membership is discovered.** A small pack fallback covers cold starts without a valid snapshot.
 5. **`packages/provider` is the only vendor surface.** No vendor URL, header, or
    model id belongs anywhere else.
 6. **Generated files are not edited.** `docs/PROVIDERS.md` is output.
@@ -95,7 +89,7 @@ Fixture first, then invariants, then the projection test, then the code:
 
 ## Human decisions
 
-Ask before: bumping `PACK_SCHEMA_VERSION`, merging a template tag, deleting a
+Ask before: bumping `PACK_SCHEMA_VERSION`, deleting a
 fallback id, choosing an effort mapping when the probe is inconclusive, or
 turning a `default` provenance into a `curated` one.
 

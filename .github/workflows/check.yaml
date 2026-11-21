@@ -45,3 +45,29 @@ jobs:
             Write-Error "CLAUDE.md / .claude/skills were checked out as regular files. Symlink support is required."
             exit 1
           }
+
+  harness-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install OpenCode
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/opencode"
+          gh release download v2.3.2 --repo anomalyco/opencode --pattern opencode-linux-x64.tar.gz --dir "$RUNNER_TEMP"
+          tar -xzf "$RUNNER_TEMP/opencode-linux-x64.tar.gz" -C "$RUNNER_TEMP/opencode"
+          echo "$RUNNER_TEMP/opencode" >> "$GITHUB_PATH"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Exercise the generated checkout in both hosts
+        run: pnpm run smoke
