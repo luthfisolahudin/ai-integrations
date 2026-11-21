@@ -29,6 +29,7 @@ const managed = [
 	"packages/contract/test",
 	"packages/catalog/test",
 	"packages/cli/src",
+	"packages/cli/test",
 	"packages/conformance/test",
 ];
 

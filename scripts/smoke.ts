@@ -92,7 +92,7 @@ try {
 	// fixture exercises the same copy the real generator does.
 	for (const path of [
 		"packages/contract/src", "packages/catalog/src", "adapters/pi/src", "adapters/opencode/src",
-		"packages/contract/test", "packages/catalog/test", "packages/cli/src", "packages/conformance/test",
+		"packages/contract/test", "packages/catalog/test", "packages/cli/src", "packages/cli/test", "packages/conformance/test",
 	]) {
 		const output = join(source, path);
 		mkdirSync(dirname(output), { recursive: true });
