@@ -1,55 +1,18 @@
-# Adding a provider
+# Add a provider
 
-Short version: `task init -- --id … --name … --base-url … --api-key-env …`.
-The `add-provider` skill has the checklist an agent should follow; this document
-explains the reasoning behind each step.
+Run the generator from the upstream checkout, with Node and pnpm available. Choose a tag that contains the copy-in engine.
 
-## Decide the tier first
+```sh
+node scripts/provider-engine.ts init --tag <version> --dest ../acme-integrations --id acme --name "Acme AI" --base-url https://api.acme.test/v1 --api-key-env ACME_API_KEY
+```
 
-The tier decides how much you have to curate, and pretending otherwise is how
-integrations start lying:
+The destination must be a new directory. Supply the credential as an environment variable. Omit `--api-key-env` for a keyless endpoint.
 
-| Tier | The catalog sends | What you must supply |
-|---|---|---|
-| A | limits, modalities, thinking hint | display names, evidence, effort |
-| B | modalities, availability, price | limits (vendor docs), effort |
-| C | ids only | everything you care about |
+In the generated checkout:
 
-A Tier C provider is legitimate. What is not legitimate is a Tier C provider
-whose picker shows 128 K context as if the vendor said so; provenance marks it
-`default`.
+1. Run `pnpm install --frozen-lockfile`.
+2. Configure field aliases, filters, and verified overrides in `provider.ts`.
+3. Capture a sanitized payload in `fixtures/catalog.json` and run `pnpm check` and `pnpm run check:catalog`.
+4. Run `pnpm run check:catalog --live`. Confirm its models in [both installed hosts](INSTALL.md).
 
-## Where each fact goes
-
-| Fact | Home | Why |
-|---|---|---|
-| endpoint, key env, `/models` path | `packages/provider/src/pack.ts` | vendor data |
-| field aliases (`fields`) | `pack.ts` | vendor data |
-| limits the catalog omits | `curated.ts` | curated, cited in `docs/EVIDENCE.md` |
-| a price models.dev does not know | `curated.ts` (`cost`) | explicit USD, recorded as `curated` |
-| a model models.dev lists under another id | `pack.ts` (`aliases`) | redirects the metadata lookup, not membership |
-| display names | `curated.ts` / `names` | policy applied to vendor labels |
-| membership floor | `fallback.ts` | so the provider is never empty |
-| measured effort | `effort.ts` | a measurement, not a guess |
-| ground truth | `invariants.ts` | independent of the catalog |
-
-## Invariants
-
-Assert facts the pack itself provides — the catalog fields or a `curated` entry.
-A limit that only models.dev knows cannot be checked offline, so an invariant on
-it would fail in CI for the wrong reason. `task check:catalog` verifies the projected model and `task check` runs it, so an
-invariant is enforced on every push. An invariant naming a model that is currently
-absent is reported, not failed.
-
-## Fixtures
-
-One sanitised `/models` payload per provider is enough. Refresh it deliberately:
-a fixture is a test, and a test that always tracks upstream tests nothing.
-
-## What "unknown" looks like
-
-- no `vision` alias and no curated entry → `input: ["text"]`;
-- no limit anywhere → `defaults` value, `provenance.limits.* = "default"`;
-- no effort entry → no effort menu, `provenance.effort = "default"`.
-
-All three are visible in `docs/PROVIDERS.md`, which is the point.
+Keep provider facts in the generated repo. [Adoption and subsequent updates](SYNC.md)

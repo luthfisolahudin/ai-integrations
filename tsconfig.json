@@ -54,6 +54,7 @@
   "include": [
     "packages/**/*.ts",
     "adapters/**/*.ts",
-    "examples/**/*.ts"
+    "examples/**/*.ts",
+    "scripts/**/*.ts"
   ]
 }
