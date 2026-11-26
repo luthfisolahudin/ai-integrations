@@ -24,3 +24,13 @@ The hosts load TypeScript straight from the checkout. Node refuses to
 type-strip TypeScript inside `node_modules`, so an npm dependency containing
 `.ts` cannot run; a workspace link can, but it ties a vendor checkout to a
 second checkout. A verified copy is the one shape that is self-contained.
+
+## Schema migrations
+
+### PACK_SCHEMA_VERSION 2
+
+- Added `HttpQuotaWindow`, `HttpQuotaAccount`, and `HttpQuotaResponse` in
+  `packages/runtime/contract/src/quota.ts`, plus optional `hooks.quota` on
+  `PackHooks`.
+- Downstream packs that do not report quota only need `PACK_SCHEMA_VERSION`
+  (already imported from `@luthfisolahudin/ai-integrations-contract`).
