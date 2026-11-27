@@ -30,3 +30,13 @@ For a provider with multiple protocols, normalized models carry the selected nat
 - A catalog change removes retired models. An empty live result and a failed discovery produce different observable outcomes.
 - A compatible engine update and rollback preserve provider files. A failing update restores the previous engine and pin.
 - Guts AI, CommandCode, and 9Router exercise the provider contracts. Any live chat verification uses a model with confirmed zero input and output rates. The fixture path covers the same contracts when a provider offers no usable free model.
+
+## Accounts and quota
+
+Quota is per account, but a host wants one row per product. Pooling therefore
+lives in the catalog (`aggregateQuotaAccounts`), where it can see every account
+a hook returned and weight the absolute `used`/`limit` amounts exactly;
+percentages alone can only be averaged, which is wrong once allowances differ.
+The contract keeps only the shape and the label rule, because the label is
+protocol surface: T3 renders `window.label` alone, so `quotaWindowLabel` names
+the provider there and every pack spells it the same way.

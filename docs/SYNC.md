@@ -34,3 +34,22 @@ second checkout. A verified copy is the one shape that is self-contained.
   `PackHooks`.
 - Downstream packs that do not report quota only need `PACK_SCHEMA_VERSION`
   (already imported from `@luthfisolahudin/ai-integrations-contract`).
+
+### Quota window absolutes and pooling (schema 2, additive)
+
+No `PACK_SCHEMA_VERSION` bump: `PackHooks.quota` keeps its signature, and the
+new surface is optional fields plus new exports, so an existing pack compiles
+and runs unchanged.
+
+- `HttpQuotaWindow` now accepts optional `used` and `limit`, the absolute
+  amounts behind `usedPercent`. An engine aggregator uses them to pool several
+  accounts of one product exactly. They are source-internal: `fetchQuota`
+  strips them before the response leaves the engine, so the served body still
+  matches the documented protocol.
+- `parseQuotaResetAt` and `quotaWindowLabel` moved into the contract, because
+  every pack was rewriting the same epoch-seconds/epoch-ms/ISO parser and the
+  same provider naming.
+- `aggregateQuotaAccounts` in the catalog pools accounts whose labels share a
+  provider. **Report `used`/`limit` when the vendor gives you absolute amounts**:
+  a percentage-only source can only be pooled approximately, and the aggregator
+  marks that case with a trailing `~`.
