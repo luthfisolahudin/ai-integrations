@@ -26,9 +26,22 @@ override such as `{ kimi: "openai" }` requires a measurement entry.
 |---|---|---|
 | Measured value | A probe compared levels on this route | `measured` |
 | Provider catalog | The provider declares its accepted values | `catalog` |
-| models.dev | Optional enrichment for catalog reports | `models.dev` |
+| Pack `curated` | A vendor document states them where the catalog is silent | `curated` |
+| models.dev | Optional enrichment for catalog reports only | `models.dev` |
 
-A measured value takes precedence over a declared value. The native adapters expose levels for a supported wire format. Keep third-party enrichment separate from the runtime's capability decisions.
+A measured value takes precedence over a declared value, and a declared value over
+a curated one. The native adapters expose levels for a supported wire format.
+
+**models.dev never decides a menu.** Its `reasoning_options` are voted across every
+gateway that publishes a model id, so they describe *those* routes. A reseller can
+publish a five-level ladder for a model whose lab only offers on/off, and a vote
+majority then ships a menu this route cannot honour. The index still fills limits,
+cost, and modality gaps; `declaredEfforts` reads the catalog and `curated` only.
+`readCachedModelIndex` is the runtime path, and it exists only after a CLI run has
+written it, so a hint-derived menu would also differ between machines.
+
+An enum that contains `none`/`off` is an off switch: `canDisable` is inferred from
+it, because a menu with no off entry cannot express what the provider accepts.
 
 ## Effort evidence
 
