@@ -54,7 +54,9 @@ attributed to a model whose lab offers only on/off is that reseller's route.
 ## Never
 
 - Never let a hint, a model name, or a reseller's enum create a menu.
-- Never read `400`/`402`/`429`/`5xx` as a capability answer.
+- Never read `402`/`429`/`5xx` as a capability answer; they are quota or outage. A
+  `4xx` on **every** level is `unsupported`, but one rejected level is a finding
+  about that level, not about the model.
 - Never treat "the API accepted `NONSENSE`" as support; these gateways rarely
   validate, so acceptance says nothing about depth.
 - Never cite a model page you did not open, or a probe you did not run.

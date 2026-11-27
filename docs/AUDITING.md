@@ -25,26 +25,46 @@ lab. When you need to know where a value came from, count who declares it:
 ```sh
 node --input-type=module -e '
 const catalog = await (await fetch("https://models.dev/api.json")).json();
-const norm = (id) => id.trim().toLowerCase().replace(/:[a-z0-9._-]+$/u, "").replace(/-\d{8}$/u, "");
-const slug = (id) => norm(id).split("/").pop();
-const target = process.argv[1];
-const votes = new Map();
+const key = (id) => String(id).trim().toLowerCase()
+  .replace(/:[a-z0-9._-]+$/u, "")
+  .replace(/[@-]\d{4}-?\d{2}-?\d{2}$/u, "")
+  .split("/").pop();
+// Under `-e`, argv[1] is the first user argument. Normalise it before comparing: an
+// uppercase id otherwise matches nothing and prints an empty result.
+const target = key(process.argv[1]);
+const claim = (m) => {
+  if (m.reasoning !== true) return "non-reasoning";
+  const ro = m.reasoning_options ?? [];
+  const effort = ro.find((o) => o.type === "effort")?.values;
+  if (Array.isArray(effort) && effort.length) return effort.join(",");
+  if (ro.some((o) => o.type === "budget_tokens")) return "budget_tokens";
+  return ro.some((o) => o.type === "toggle") ? "toggle-only" : "reasoning, no control";
+};
+// Deduplicate per publisher: one gateway listing four spellings of a model is one
+// vote, not four.
+const byPublisher = new Map();
 for (const [provider, entry] of Object.entries(catalog))
   for (const [id, model] of Object.entries(entry.models ?? {})) {
-    if (slug(id) !== target) continue;
-    const effort = (model.reasoning_options ?? []).find((o) => o.type === "effort")?.values;
-    const label = effort ? effort.join(",") : "silent";
-    votes.set(label, [...(votes.get(label) ?? []), provider]);
+    if (key(id) !== target) continue;
+    byPublisher.set(provider, new Set([...(byPublisher.get(provider) ?? []), claim(model)]));
   }
+if (byPublisher.size === 0) { console.error(`no publisher lists "${target}"`); process.exit(1); }
+const votes = new Map();
+for (const [provider, claims] of byPublisher)
+  votes.set([...claims].sort().join(" + "), [...(votes.get([...claims].sort().join(" + ")) ?? []), provider]);
+console.log(`${target}: ${byPublisher.size} publisher(s)`);
 for (const [label, providers] of [...votes].sort((a, b) => b[1].length - a[1].length))
-  console.log(label.padEnd(48), providers.length, providers.slice(0, 6).join(" "));
+  console.log(String(providers.length).padStart(4), label.padEnd(44), providers.slice(0, 6).join(" "));
 ' <model-id>
 ```
 
-First-party providers are `moonshotai`, `minimax`, `xiaomi`, `tencent-tokenhub`,
-`nvidia`, `deepseek`, `zai`, `alibaba`, `openai`, `anthropic`, `google`. If only
-resellers declare a ladder, treat the ladder as that reseller's route, not the
-model's.
+A publisher is first-party when it makes the model; test that per model rather than
+from a list, because the same publisher name can be a lab for its own models and a
+reseller for others. `tencent-tokenhub` is first-party for `hy3`/`hy4` and a
+reseller for the Kimi and GLM ids it also lists; `nvidia` is first-party for
+`nemotron-*` and a reseller for the DeepSeek and Kimi ids in its catalog. Plans of a
+lab (`*-coding-plan`, `*-token-plan`, `*-cn`) are the same lab counted again. If
+only resellers declare a ladder, treat it as that reseller's route, not the model's.
 
 ## Deciding thinking support
 
